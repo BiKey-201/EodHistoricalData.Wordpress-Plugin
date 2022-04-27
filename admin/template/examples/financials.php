@@ -48,7 +48,7 @@ $form_class = '.eod_shortcode_form.for_financials';
 
 
 <script>
-    function eod_create_fundamental_shortcode(){
+    function eod_create_financial_shortcode(){
         let $shortcode = jQuery('<?= $form_class ?> .eod_shortcode_result'),
             $search_box = jQuery('<?= $form_class ?> .eod_search_box'),
             ticker = $search_box.find('.selected').data('ticker'),
@@ -92,12 +92,12 @@ $form_class = '.eod_shortcode_form.for_financials';
 
 
     jQuery(document).on('change', '<?= $form_class ?> select, <?= $form_class ?> input[type=number]', function(){
-        eod_create_fundamental_shortcode();
+        eod_create_financial_shortcode();
     });
 
     jQuery(document).on('click', '<?= $form_class ?> .eod_search_box .remove', function(){
         jQuery(this).parent().remove();
-        eod_create_fundamental_shortcode();
+        eod_create_financial_shortcode();
     });
 
     jQuery(function(){
@@ -112,7 +112,7 @@ $form_class = '.eod_shortcode_form.for_financials';
                 );
                 res.$input.val('');
 
-                eod_create_fundamental_shortcode();
+                eod_create_financial_shortcode();
             }
         );
     });
