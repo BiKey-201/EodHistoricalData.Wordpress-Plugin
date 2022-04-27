@@ -1,9 +1,9 @@
-<span class="eod_ticker <?php echo $tickerData['error'] ? 'error' : $tickerData['evolutionClass'] ?>" role="eod_ticker"
-      target="<?php echo $target ?>">
-    <span role="name"><?php echo $target ?></span><span
-            role="close"><?php echo $tickerData['error'] ? $tickerData['error'] : $tickerData['close'] ?></span>
-    <?php if (!isset($tickerData['error'])) : ?>
-        <span role="evolution">(<span
-                    role="value"><?php echo $tickerData['evolutionSymbol'] . $tickerData['evolution'] ?></span>)</span>
-    <?php endif; ?>
+<span class="eod_ticker<?= $error ? ' error' : '' ?>">
+    <span class="name"><?= $title === false ? $target : $title ?></span>
+    <span class="close <?= $type ?> eod_t_<?= $key ?>"
+          data-target="<?= $target ?>"
+          <?= $ndap === '0' || $ndap ? "data-ndap='$ndap'" : '' ?>
+          <?= $ndape === '0' || $ndape ? "data-ndape='$ndape'" : '' ?>>
+    </span>
+    <span class="evolution eod_t_<?= $key ?>_evol"></span>
 </span>

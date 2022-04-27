@@ -1,54 +1,226 @@
-.eod_ticker {
+.eod_error{
+    color: #c50000;
+    font-weight: 600;
+}
+
+.eod_toggle{
+    outline: none;
+    border: 1px solid #f06a40;
+    text-transform: uppercase;
+    font-size: 12px;
+    font-weight: 600;
+    background: #fff;
+    padding: 0;
+    display: grid;
+    grid-auto-flow: column;
+    width: 150px;
+}
+.eod_toggle span{
+    padding: 2px 5px;
+    color: #f06a40;
+    background-color: #fff;
+}
+.eod_toggle span.selected{
+    color: #fff;
+    background-color: #f06a40;
+    cursor: default;
+}
+
+
+/* =========================================
+                  TICKER
+   ========================================= */
+.eod_ticker{
     display: inline-block;
     font-size: 12px;
 }
 
-.eod_ticker [role='name'] {
+.eod_ticker .name{
     font-weight: bold;
-    margin-right: 5px;
+    margin-right: 3px;
 }
-
-.eod_ticker [role='value'] {
-}
-
 .eod_ticker.error,
-.eod_ticker.minus [role='evolution'] {
-    color: #b92c28;
-}
-
-.eod_ticker.plus [role='evolution'] {
-    color: #27a644;
-}
-
-.eod_ticker.equal [role='evolution'] {
-    color: #357ebd;
-}
-
-.eod_ticker [role='evolution']::after {
+.eod_ticker.minus .evolution {color: #b92c28;}
+.eod_ticker.plus .evolution{color: #27a644;}
+.eod_ticker.equal .evolution {color: #357ebd;}
+.eod_ticker .evolution:after{
     display: inline-block;
     width: 30px;
     height: 30px;
     -webkit-background-size: contain;
     background-size: contain;
 }
-
-.eod_ticker.minus [role='evolution']::after {
-    content: '\f140';
-    font-family: dashicons;
+.eod_ticker.minus .evolution:after{
+    content: '\2BC6';
     color: #b92c28;
 }
-
-.eod_ticker.plus [role='evolution']::after {
-    content: '\f142';
-    font-family: dashicons;
+.eod_ticker.plus .evolution:after{
+    content: '\2BC5';
     color: #27a644;
 }
-
-.eod_ticker.equal [role='evolution']::after {
-    content: '=';
+.eod_ticker.equal .evolution:after{
+    content: '';
     color: #357ebd;
 }
 
 ul.eod_widget_ticker_list li {
     display: block;
+}
+
+
+/* =========================================
+                   NEWS
+   ========================================= */
+.eod_news_list{
+    margin-bottom: 15px;
+}
+.eod_news_list .eod_news_item{
+    position: relative;
+    margin-bottom: 15px;
+}
+.eod_news_list .eod_news_item .h {
+    display: block;
+    font-size: 1.2em;
+    font-weight: 700;
+    margin: 0 0 3px;
+    line-height: 1.3em;
+    color: black;
+}
+.eod_news_list .eod_news_item blockquote{
+    margin: 0;
+    background: none;
+    padding: 0;
+    border: 0;
+    font-style: normal;
+}
+.eod_news_list .eod_news_item blockquote:before{
+    content: none;
+}
+.eod_news_list .eod_news_item .tags{
+    display: flex;
+    flex-wrap: wrap;
+    margin: 5px 0 0;
+    list-style: none;
+}
+.eod_news_list .eod_news_item .tags li{
+    font-size: .7em;
+    line-height: 1.4em;
+    margin: 0 15px 1px 0;
+    color: #7b8999;
+    font-weight: 500;
+    padding: 0;
+}
+.eod_news_list .eod_news_item .date{
+    color: #7b8999;
+    font-weight: 600;
+    font-size: 0.8em;
+}
+.eod_news_list .eod_news_item .description{
+    color: black;
+    text-align: justify;
+    line-height: 1.5em;
+}
+.eod_news_list .eod_news_item .thumbnail{
+    position: absolute;
+    display: none;
+    background-color: #eee;
+    left: 15px;
+    top: 15px;
+    width: 90px;
+    height: 90px;
+    border-radius: 10px;
+    overflow: hidden;
+}
+.eod_news_list .eod_news_item img{
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+}
+
+
+/* =========================================
+               FUNDAMENTAL DATA
+   ========================================= */
+.eod_fd_list{
+    margin: 0 0 10px!important;
+}
+.eod_fd_list li{
+    list-style: none;
+    padding: 2px 0;
+    margin: 0!important;
+}
+.eod_fd_list ul{
+    margin: 0 0 5px 2px!important;
+}
+
+/* =========================================
+                 FINANCIALS
+   ========================================= */
+.eod_financials{
+    margin: 5px 0 15px;
+    background: #fff;
+}
+.eod_financials .eod_tbody{
+    font-size: 12px;
+    overflow: auto;
+}
+.eod_financials .eod_tbody > div{
+    display: flex;
+    border-top: 1px solid #ebebeb;
+    width: max-content;
+}
+.eod_financials .eod_tbody > div:last-child{
+    border-bottom: 1px solid #ebebeb;
+}
+.eod_financials .eod_tbody > div.header{
+    color: #afafaf;
+}
+.eod_financials .eod_tbody > div > div{
+    align-items: center;
+    display: flex;
+    justify-content: flex-end;
+    line-height: 21px;
+    margin-left: 16px;
+    padding-bottom: 6px;
+    padding-top: 6px;
+    white-space: nowrap;
+    min-width: 80px;
+}
+.eod_financials .eod_tbody > div > div:first-child{
+    min-width: 150px;
+    margin-left: 0;
+    justify-content: flex-start;
+    position: sticky;
+    left: 0;
+    background-color: #fff;
+}
+.eod_financials .eod_tbody > div > div:first-child span{
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 140px;
+}
+.eod_financials .eod_tbody > div > div:first-child:after{
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 0;
+    height: 100%;
+    width: 5px;
+    background: linear-gradient(90deg, #0000001f, transparent);
+    transform: translateX(100%);
+}
+
+.eod_financials .simplebar-wrapper .eod_tbody{
+    overflow: unset;
+}
+.eod_financials .simplebar-wrapper .eod_tbody > div:last-child {
+    border-bottom: 5px solid #ebebeb;
+}
+@media screen and (max-width: 765px) {
+    .eod_financials .eod_tbody{
+        padding-bottom: 6px;
+    }
 }
