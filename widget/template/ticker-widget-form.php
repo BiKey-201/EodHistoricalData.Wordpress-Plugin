@@ -99,7 +99,7 @@
         </div>
     </div>
 
-    <input type="hidden" id="<?php echo $_this->get_field_id('target'); ?>" class="target_list"
+    <input type="hidden" id="<?php echo $_this->get_field_id('target'); ?>" class="target_list json"
            name="<?= $_this->get_field_name('target') ?>"
            value="<?= esc_attr($target_json) ?>" />
 

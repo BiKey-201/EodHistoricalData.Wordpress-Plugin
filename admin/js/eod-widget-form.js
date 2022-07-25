@@ -49,7 +49,7 @@ jQuery(document).on('widget-updated widget-added', function(e){
     });
 });
 
-
+// Input name
 jQuery(document).on('change', '.eod_ticker_widget input.name', function(){
     let ticker_title = jQuery(this).val(),
         display = jQuery(this).closest('.eod_widget_form').find('.field.display_name input:checked').val(),
@@ -66,6 +66,8 @@ jQuery(document).on('change', '.eod_ticker_widget input.name', function(){
 
     $li.find('.header .name').text(text)
 });
+
+// Select type of name
 jQuery(document).on('change', '.eod_ticker_widget .field.display_name input', function(){
     let $input = jQuery(this),
         $list = $input.closest('.eod_widget_form').find('.eod_search_box .selected');
@@ -92,7 +94,7 @@ jQuery(document).on('change', '.eod_ticker_widget .field.display_name input', fu
                 method: "POST",
                 url: eod_ajax_url,
                 data: {
-                    'action': 'search_by_string',
+                    'action': 'search_eod_item_by_string',
                     'nonce_code': eod_ajax_nonce,
                     'string': target,
                 }
@@ -118,15 +120,13 @@ jQuery(document).on('click', '.eod_ticker_widget .eod_search_box.advanced .heade
     let $li = jQuery(this).closest('li');
     $li.toggleClass('opened');
 });
-jQuery(document).on('click', '.eod_ticker_widget .eod_search_box .remove', function(){
-    let $list = jQuery(this).closest('.selected');
-    jQuery(this).closest('li').remove();
-    compile_ticker_list_val( $list );
-});
 
 function compile_ticker_list_val( $list ){
+    let $input = $list.closest('.eod_widget_form').find('input.target_list'),
+        list_of_targets = [],
+        is_json_response = $input.hasClass('json');
+
     // Collect targets info
-    let list_of_targets = [];
     $list.find('li').each(function () {
         let target = jQuery(this).attr('data-target'),
             full_name = jQuery(this).attr('data-name'),
@@ -138,17 +138,20 @@ function compile_ticker_list_val( $list ){
         if(full_name) data.name = full_name;
         if(ndap === 0 || ndap) data.ndap = ndap;
 
-        list_of_targets.push(data);
+        list_of_targets.push(is_json_response ? data : target);
     });
 
     // Write in the input field
-    let $input = $list.closest('.eod_widget_form').find('input.target_list');
-    $input.val( JSON.stringify( list_of_targets ) ).change();
+    if(is_json_response)
+        $input.val( JSON.stringify( list_of_targets ) ).change();
+    else
+        $input.val( list_of_targets.join(', ') ).change();
 }
 
 /* ======================================
                    NEWS
    ====================================== */
+// Target type
 jQuery(document).on('change', '.eod_news_widget .news_type input', function(){
     let $widget = jQuery(this).closest('.eod_news_widget');
     $widget.find('.news_type input').each(function(){
@@ -158,6 +161,60 @@ jQuery(document).on('change', '.eod_news_widget .news_type input', function(){
     $widget.find('.eod_search_box .remove').click();
 });
 
+// Target search and selection
+jQuery(document).on('widget-updated widget-added', function(e){
+    eod_search_input(jQuery('.eod_news_widget .eod_search_widget_input'), function (res) {
+        let target = res.ticker.code + '.' + res.ticker.exchange,
+            $box = res.$row.closest('.eod_search_box'),
+            $list = $box.find('.selected'),
+            $item = jQuery('\
+                    <li data-target="' + target + '">\
+                        <span class="move"></span>\
+                        <div class="header">\
+                            <span class="name">' + target + '</span>\
+                            <div class="remove"></div>\
+                        </div>\
+                    </li>');
+
+        // Add item
+        $list.append( $item );
+        compile_ticker_list_val( $list );
+    });
+
+    // Sortable selected list
+    jQuery(".eod_news_widget .eod_search_box.advanced .selected").sortable({
+        handle: ".move",
+        axis: "y",
+        revert: false,
+        revertDuration: 0,
+        cursor: "grabbing",
+        stop: function (e, ul){
+            let $list = ul.item.closest('.selected');
+            compile_ticker_list_val( $list );
+        }
+    });
+});
+
+/* ======================================
+               FUNDAMENTAL
+   ====================================== */
+// Select data-preset
+jQuery(document).on('change', '.eod_fundamental_widget .fd_preset', function(){
+    let type = jQuery(this).find('option:checked').attr('data-type'),
+        $input = jQuery('.eod_fundamental_widget .eod_search_input'),
+        selected_item = $input.data('selected_ticker');
+
+    // Write data for filter items by type
+    $input.data('type_filter', type ? type : '');
+
+    // Lock/unlock search input
+    $input.prop("disabled", !type);
+    $input.closest('.field').toggleClass("disabled", !type);
+
+    // Clean search input with incompatible item
+    if(selected_item && selected_item.type.toLowerCase() !== type)
+        $input.val('').siblings('.selected').find('.remove').click();
+});
 
 
 /* ======================================
@@ -183,4 +240,9 @@ jQuery(document).on('widget-updated widget-added', function(e){
 jQuery(document).on('click', '.eod_widget_form .eod_search_box:not(.advanced) .remove', function(){
     jQuery(this).closest('.eod_widget_form').find('input.target').val('').change();
     jQuery(this).parent().remove();
+});
+jQuery(document).on('click', '.eod_widget_form .eod_search_box.advanced .remove', function(){
+    let $list = jQuery(this).closest('.selected');
+    jQuery(this).closest('li').remove();
+    compile_ticker_list_val( $list );
 });

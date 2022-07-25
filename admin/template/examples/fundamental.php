@@ -9,22 +9,25 @@ $form_class = '.eod_shortcode_form.for_fundamental';
 
 <form class="<?= str_replace('.', ' ', $form_class) ?>">
     <div class="field">
-        <label for="esi_fd" class="h">Ticker code/name <span class="require" title="required shortcode element">*</span></label>
-        <div class="eod_search_box">
-            <input id="esi_fd" class="eod_search_input" type="text" autocomplete="off" placeholder="Find ticker by code or company name"/>
-            <div class="result"></div>
-        </div>
-    </div>
-
-    <div class="field">
         <label for="fd_preset" class="h">Data Preset <span class="require" title="required shortcode element">*</span></label>
         <p>The preset defines the list of data that will be displayed. You can create it on the page <a href="<?= get_admin_url() ?>edit.php?post_type=fundamental-data">Fundamental Data presets</a>.</p>
         <select id="fd_preset">
-            <option value="">Select preset</option>
-        <?php foreach ($fd_presets as $preset){ ?>
-            <option value="<?= $preset->ID ?>"><?= $preset->post_title ?></option>
-        <?php } ?>
+            <option disabled selected value="">Select preset</option>
+            <?php foreach ($fd_presets as $preset){ ?>
+                <?php $preset_type = str_replace('_', ' ', get_post_meta( $preset->ID,'_fd_type', true ) ) ?>
+                <option value="<?= $preset->ID ?>" data-type="<?= $preset_type ?>">
+                    <?= $preset->post_title ?> (<?= $preset_type ?>)
+                </option>
+            <?php } ?>
         </select>
+    </div>
+
+    <div class="field disabled">
+        <label for="esi_fd" class="h">Ticker code/name <span class="require" title="required shortcode element">*</span></label>
+        <div class="eod_search_box">
+            <input disabled id="esi_fd" class="eod_search_input" type="text" autocomplete="off" placeholder="Find ticker by code or company name"/>
+            <div class="result"></div>
+        </div>
     </div>
 
     <div class="field">
@@ -74,6 +77,21 @@ $form_class = '.eod_shortcode_form.for_fundamental';
 
 
     jQuery(document).on('change', '<?= $form_class ?> select', function(){
+        let type = jQuery('<?= $form_class ?> #fd_preset option:checked').attr('data-type'),
+            $input = jQuery('<?= $form_class ?> .eod_search_input'),
+            selected_item = $input.data('selected_ticker');
+
+        // Write data for filter items by type
+        $input.data('type_filter', type ? type : '');
+
+        // Lock/unlock search input
+        $input.prop("disabled", !type);
+        $input.closest('.field').toggleClass("disabled", !type);
+
+        // Clean search input with incompatible item
+        if(selected_item && selected_item.type.toLowerCase() !== type)
+            $input.val('').siblings('.selected').find('.remove').click();
+
         eod_create_fundamental_shortcode();
     });
 

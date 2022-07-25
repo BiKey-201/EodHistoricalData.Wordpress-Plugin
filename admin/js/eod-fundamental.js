@@ -72,16 +72,20 @@ function eod_prepare_fd_in_input(){
 // Select financials group
 jQuery(document).on('change', 'select[name=financial_group]', function(){
     jQuery('.fd_list.selected_list').html('');
-    jQuery('.fd_list.source_list li').addClass('hide');
 
     // Searching selected group
-    let selected_group = jQuery(this).val(), $group;
-    jQuery('.fd_list.source_list .has_child').each(function() {
-        if( jQuery(this).find('> span').attr('data-slug') === selected_group )
-            $group = jQuery(this);
+    let selected_group = jQuery(this).val().split('->').join('_');
+    jQuery('.fd_list.source_list').each(function() {
+        jQuery(this).toggleClass( 'active', jQuery(this).hasClass( selected_group ) )
     });
-    $group.parent().closest('.has_child').removeClass('hide');
-    $group.removeClass('hide').find('li').removeClass('hide');
+});
+
+// Select fundamental data type
+jQuery(document).on('change', '#fd_type', function(e){
+    jQuery('.fd_list.source_list').removeClass('active');
+    jQuery('.fd_list.source_list.'+jQuery(this).val()).addClass('active');
+    jQuery('.fd_list.selected_list').html('');
+    eod_prepare_fd_in_input();
 });
 
 // Clicking on the remove or add button

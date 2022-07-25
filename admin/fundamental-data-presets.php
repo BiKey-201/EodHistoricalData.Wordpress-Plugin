@@ -33,21 +33,37 @@ if(!class_exists('EOD_Fundamental_Data_Admin')) {
             global $post;
             global $eod_api;
 
+            $fd_type = get_post_meta($post->ID, '_fd_type', true);
+            if(!$fd_type) $fd_type = 'stock';
+
             $fd_list = get_post_meta($post->ID, '_fd_list', true);
-            $vars = $eod_api->get_fd_lib();
+            $fd_hierarchy = $eod_api->get_fd_hierarchy();
             ?>
 
             <div class="fd_array_grid">
                 <div>
+                    <select id="fd_type" name="fd_type">
+                        <?php foreach ($fd_hierarchy as $type => $vars) { ?>
+                        <option value="<?= $type ?>" <?php selected($type, $fd_type); ?>>
+                            <?= str_replace('_', ' ', $type) ?>
+                        </option>
+                        <?php } ?>
+                    </select>
+                </div>
+                <div></div>
+                <div>
                     <input type="text" class="search_fd_variable" placeholder="Search data">
-                    <ul class="fd_list source_list">
+
+                    <?php foreach ($fd_hierarchy as $type => $vars) { ?>
+                    <ul class="fd_list source_list <?= $type ?> <?= $type === $fd_type ? 'active' : '' ?>">
                         <?php eod_display_source_list($vars); ?>
                     </ul>
+                    <?php } ?>
                 </div>
                 <div>
                     <ul class="fd_list selected_list">
                         <?php if($fd_list){ ?>
-                            <?php eod_display_saved_list($fd_list, $eod_api->get_fd_lib()); ?>
+                            <?php eod_display_saved_list($fd_list); ?>
                         <?php } ?>
                     </ul>
                 </div>
@@ -84,6 +100,8 @@ if(!class_exists('EOD_Fundamental_Data_Admin')) {
 
             $fd_list = sanitize_text_field( $_POST['fd_list'] );
             update_post_meta( $post_id, '_fd_list', $fd_list );
+            $fd_type = sanitize_text_field( $_POST['fd_type'] );
+            update_post_meta( $post_id, '_fd_type', $fd_type );
         }
     }
 }

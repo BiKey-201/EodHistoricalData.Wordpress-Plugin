@@ -1,5 +1,15 @@
 <?php
 /**
+ * Get main options with default values
+ * @return array
+ */
+function get_eod_options()
+{
+    return wp_parse_args( get_option( 'eod_options' ), EOD_DEFAULT_OPTIONS );
+}
+
+
+/**
  * Get display options with default values
  * @return array
  */
@@ -71,21 +81,12 @@ function eod_include( $filename = '' ) {
  * Display sortable flat list
  *
  * @param string $saved_json saved list in json format
- * @param array $fd_lib array with parameter titles
  */
-function eod_display_saved_list($saved_json, $fd_lib ){
+function eod_display_saved_list($saved_json){
     global $eod_api;
     $list = json_decode( $saved_json );
     foreach ($list as $slug){
-        // Define title
-        $path = explode('->', $slug);
-        $buffer = $fd_lib;
-        foreach ($path as $key){
-            if(!isset($buffer[$key])) break;
-            $buffer = $buffer[$key];
-        }
-        $title = is_string($buffer) ? $buffer : $slug;
-
+        $title = eod_get_fd_title_by_slug( $slug );
         echo "<li>
                 <span data-slug='$slug'>
                     $title
@@ -96,32 +97,41 @@ function eod_display_saved_list($saved_json, $fd_lib ){
 }
 
 /**
+ * Get display name of fundamental data item by slug
+ *
+ * @param string $slug
+ * @return string
+ */
+function eod_get_fd_title_by_slug($slug){
+    global $eod_api;
+    $fd_lib = $eod_api->get_fd_titles();
+    if( array_key_exists($slug, $fd_lib) ){
+        $title = $fd_lib[$slug];
+    }else{
+        $path = explode('->', $slug);
+        $title = end( $path );
+    }
+    return $title;
+}
+
+/**
  * Display sortable source list
  *
  * @param array $list
  * @param array $path list of keys
+ * @param array $display_group
  */
-function eod_display_source_list(array $list, $path = array(), $display_group = array()) {
+function eod_display_source_list($list, $path = array()) {
     foreach ($list as $key=>$var){
         if( $key[0] === '_' ) continue;
+
         $class_list = array('draggable');
-        $slug = implode('->', array_merge($path, [$key]));
+        $current_path = array_merge($path, [is_string($var) ? $var : $key]);
+        $slug = implode('->', $current_path);
         $depth = count($path)+1;
 
-        // If a display group is specified, then need to check if the current parameter is in this group.
-        $in_group = true;
-        $current_group = array_merge($path, [$key]);
-        foreach ($display_group as $i => $k){
-            if ($current_group[$i] !== $k)
-                $in_group = false;
-
-            // Break loop
-            // Current item already not in group or next key out of range
-            if ($in_group === false || $i+2 > count($current_group))
-                break;
-        }
-        if($in_group === false)
-            $class_list[] = 'hide';
+        // Define title
+        $title = eod_get_fd_title_by_slug( $slug );
 
         // Display item
         if( is_array($var) ){
@@ -130,7 +140,7 @@ function eod_display_source_list(array $list, $path = array(), $display_group = 
 
             echo "<li class='has_child ".implode(' ', $class_list)."'>
                     <span style='padding-left: ".($depth*10)."px;' data-slug='$slug'>
-                        $key
+                        $title
                         <button title='add whole group'>+</button>
                     </span>";
             echo   '<ul>';
@@ -144,7 +154,7 @@ function eod_display_source_list(array $list, $path = array(), $display_group = 
         }else {
             echo "<li class='".implode(' ', $class_list)."'>
                     <span style='padding-left: ".($depth*10)."px;' data-slug='$slug'>
-                        $var
+                        $title
                         <button title='add item'>+</button>
                     </span>
                   </li>";

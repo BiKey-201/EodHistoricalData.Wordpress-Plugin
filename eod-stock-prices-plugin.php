@@ -2,9 +2,9 @@
 
 /*
 Plugin Name: Financial Stocks & Crypto Market Data Plugin
-Plugin URI: https://eodhistoricaldata.com/knowledgebase/plugins
+Plugin URI: https://eodhistoricaldata.com/financial-apis/wordpress-plugin-for-stock-data/
 Description: The stock prices plugin allows you to use a widget and a shortcode to display the ticker data you want.
-Version: 1.7
+Version: 1.8.1
 Author: Eod Historical Data
 Author URI: https://eodhistoricaldata.com
 */
@@ -13,6 +13,7 @@ Author URI: https://eodhistoricaldata.com
 require( plugin_dir_path( __FILE__ ) . 'widget/ticker-widget.php' );
 require( plugin_dir_path( __FILE__ ) . 'widget/news-widget.php' );
 require( plugin_dir_path( __FILE__ ) . 'widget/fundamental-widget.php' );
+require( plugin_dir_path( __FILE__ ) . 'widget/financial-widget.php' );
 
 if(!class_exists('EOD_Stock_Prices_Plugin'))
 {
@@ -30,16 +31,20 @@ if(!class_exists('EOD_Stock_Prices_Plugin'))
         function initialize()
         {
             // Define constants.
-            $this->define( 'EOD_VER', '1.7' );
+            $this->define( 'EOD_VER', '1.8.1' );
             $this->define( 'EOD_PLUGIN_NAME', 'Financial Stocks & Crypto Market Data Plugin' );
             $this->define( 'EOD_DEFAULT_API', 'OeAFFmMliFG5orCUuwAKQ8l4WWFQ67YX' );
             $this->define( 'EOD_PATH', plugin_dir_path( __FILE__ ) );
             $this->define( 'EOD_URL', plugins_url( '/',__FILE__ ) );
             $this->define( 'EOD_BASENAME', plugin_basename( __FILE__ ) );
+            $this->define( 'EOD_DEFAULT_OPTIONS', array(
+                'api_key'   => EOD_DEFAULT_API,
+                'news_ajax' => 'on',
+            ));
             $this->define( 'EOD_DEFAULT_SETTINGS', array(
-                'ndap' => 3,
-                'ndape' => 2,
-                'scrollbar' => 'on'
+                'ndap'      => 3,
+                'ndape'     => 2,
+                'scrollbar' => 'on',
             ));
 
             // Include utility functions.
@@ -57,6 +62,7 @@ if(!class_exists('EOD_Stock_Prices_Plugin'))
             // Add actions and filters.
             add_action( 'init', array( $this, 'init' ), 5 );
             add_action( 'init', array( $this, 'register_post_types' ), 5 );
+            add_action( 'rest_api_init',  array( $this, 'eod_rest_api' ) );
             add_action( 'wp_enqueue_scripts',  array( $this, 'client_scripts' ) );
             add_action( 'widgets_init', array( $this, 'register_widgets' ) );
 
@@ -103,10 +109,9 @@ if(!class_exists('EOD_Stock_Prices_Plugin'))
                 'supports'          => array('title'),
                 'hierarchical'      => false,
                 'public'            => false,
-                'show_in_rest'      => false,
+                'show_in_rest'      => true,
                 'show_ui'           => true,
-                //'show_in_menu'      => 'eod-stock-prices',
-                'show_in_menu'      => false,
+                'show_in_menu'      => 'eod-stock-prices',
                 'menu_position'     => 3,
                 'can_export'        => true,
                 'has_archive'       => true,
@@ -133,15 +138,53 @@ if(!class_exists('EOD_Stock_Prices_Plugin'))
                 'supports'          => array('title'),
                 'hierarchical'      => false,
                 'public'            => false,
-                'show_in_rest'      => false,
+                'show_in_rest'      => true,
                 'show_ui'           => true,
-                'show_in_menu'      => false,
+                'show_in_menu'      => 'eod-stock-prices',
                 'menu_position'     => 3,
                 'can_export'        => true,
                 'has_archive'       => true,
                 'rewrite'           => true,
                 'capability_type'   => 'page',
             ));
+        }
+
+        public function eod_rest_api(){
+            $namespace = 'eod-api/v2';
+
+            // Get info about Fundamental Data preset.
+            register_rest_route($namespace, 'get-fd-preset/(?P<id>\d+)', array(
+                'methods'   => WP_REST_Server::READABLE,
+                'callback'  => array( $this, 'rest_api_fd' ),
+                'args' => array(
+                    'id' => array(
+                        'validate_callback' => function($param, $request, $key) {
+                            return is_numeric( $param );
+                        }
+                    ),
+                )
+            ));
+
+            // Get titles for Fundamental Data.
+            register_rest_route($namespace, 'get-fd-titles', array(
+                'methods'   => WP_REST_Server::READABLE,
+                'callback'  => array( $this, 'rest_api_fd_titles' )
+            ));
+
+        }
+        public function rest_api_fd( $data ){
+            $preset = get_post( $data['id'] );
+            $response = [
+                'id' => $preset->ID,
+                'fd_list' => get_post_meta($preset->ID, '_fd_list', true),
+                'fd_type' => get_post_meta($preset->ID, '_fd_type', true)
+            ];
+
+            return new WP_REST_Response( $response );
+        }
+        public function rest_api_fd_titles(){
+            global $eod_api;
+            return new WP_REST_Response( $eod_api->get_fd_titles() );
         }
 
         /**
@@ -151,6 +194,7 @@ if(!class_exists('EOD_Stock_Prices_Plugin'))
             register_widget( 'EOD_Stock_Prices_Widget' );
             register_widget( 'EOD_News_Widget' );
             register_widget( 'EOD_Fundamental_Widget' );
+            register_widget( 'EOD_Financial_Widget' );
         }
 
         /**
@@ -187,11 +231,13 @@ if(!class_exists('EOD_Stock_Prices_Plugin'))
             $financials_lib = $eod_api->get_financials_lib();
             array_walk_recursive ($financials_lib, function($a, $b) use (&$prop_naming) { $prop_naming [$b] = $a; });
 
+            $eod_options = get_eod_options();
             $eod_display_settings = get_option('eod_display_settings');
             return array(
                 'ndap' => isset($eod_display_settings['ndap']) ? $eod_display_settings['ndap'] : EOD_DEFAULT_SETTINGS['ndap'],
                 'ndape' => isset($eod_display_settings['ndape']) ? $eod_display_settings['ndape'] : EOD_DEFAULT_SETTINGS['ndape'],
-                'prop_naming' => $prop_naming
+                'prop_naming' => $prop_naming,
+                'news_ajax' => $eod_options['news_ajax']
             );
         }
 

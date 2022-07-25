@@ -1,6 +1,6 @@
 <?php
 global $eod_api;
-$fd_lib = $eod_api->get_fd_lib();
+$fd_lib = $eod_api->get_fd_hierarchy();
 ?>
 <?php if($fd_list['error']){ ?>
     <div class="eod_error">Fundamental data: <?= $fd_list['error'] ? : 'error' ?></div>
@@ -9,13 +9,7 @@ $fd_lib = $eod_api->get_fd_lib();
         <?php foreach($fd_list as $slug){ ?>
             <?php
             // Define title
-            $path = explode('->', $slug);
-            $buffer = $fd_lib;
-            foreach ($path as $key){
-                if(!isset($buffer[$key])) break;
-                $buffer = $buffer[$key];
-            }
-            $title = is_string($buffer) ? $buffer : '';
+            $title = eod_get_fd_title_by_slug($slug);
             ?>
             <li data-slug="<?= $slug ?>">
                 <b><?= $title ? $title.': ' : '' ?></b>

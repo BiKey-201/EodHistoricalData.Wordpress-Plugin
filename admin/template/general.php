@@ -36,6 +36,10 @@
                         </div>
                         <div class="footer">
                             <a href="<?= get_admin_url() ?>admin.php?page=eod-examples&e=financials" class="s eod_btn">Create Shortcode</a>
+                            <a href="<?= get_admin_url() ?>widgets.php" class="w">
+                                or use as WP Widget:
+                                <span>EOD Financial Table</span>
+                            </a>
                         </div>
                     </div>
                     <div class="widget">

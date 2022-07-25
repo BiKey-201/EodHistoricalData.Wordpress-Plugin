@@ -1,3 +1,5 @@
+<?php $targets = $target ? explode(', ', $target) : array(); ?>
+
 <div id="eod_widget_<?= $_this->get_field_id('target') ?>" class="eod_widget_form eod_news_widget" target="<?php echo $_this->get_field_id('target') ?>">
     <div class="field">
         <label for="<?= $_this->get_field_id( 'title' ) ?>">
@@ -39,20 +41,26 @@
 
     <div class="field by_ticker" <?= $type === 'ticker' ? '' : 'style="display: none;"' ?>>
         <label><b>Ticker code/name:</b></label>
-        <div class="eod_search_box">
-            <input class="eod_search_input" type="text" autocomplete="off" placeholder="Find ticker by code or company name"/>
+        <div class="eod_search_box advanced">
+            <input class="eod_search_widget_input" type="text" autocomplete="off" placeholder="Find ticker by code or company name"/>
             <div class="result"></div>
-            <div class="selected">
-                <?php if( $target ) { ?>
-                    <span><?= $target ?></span>
-                    <span></span>
-                    <div class="remove"></div>
+            <ul class="selected">
+                <?php if( count($targets) ) { ?>
+                    <?php foreach($targets as $item) { ?>
+                        <li data-target="<?= $item ?>">
+                            <span class="move"></span>
+                            <div class="header">
+                                <span class="name"><?= $item ?></span>
+                                <div class="remove"></div>
+                            </div>
+                        </li>
+                    <?php } ?>
                 <?php } ?>
-            </div>
+            </ul>
         </div>
     </div>
 
-    <input type="hidden" id="<?php echo $_this->get_field_id('target'); ?>" class="target"
+    <input type="hidden" id="<?php echo $_this->get_field_id('target'); ?>" class="target_list"
            name="<?= $_this->get_field_name('target') ?>"
            value="<?= esc_attr($target) ?>" />
 
@@ -66,11 +74,11 @@
     </div>
 
     <div class="field">
-        <label for="<?= $_this->get_field_id('offset') ?>"><b>Offset:</b></label>
-        <p>The offset of the data. Default value: 0, minimum value: 0. For example, to get 100 symbols starting from 200 you should use limit=100 and offset=200.</p>
-        <input type="number" value="<?= $offset ?>" min="0"
-               name="<?= $_this->get_field_name('offset') ?>"
-               id="<?= $_this->get_field_id('offset') ?>">
+        <label for="<?= $_this->get_field_id('pagination') ?>"><b>Pagination:</b></label>
+        <p>The number of news items per page. Default 0 disables pagination.</p>
+        <input type="number" value="<?= $pagination ?>" min="0"
+               name="<?= $_this->get_field_name('pagination') ?>"
+               id="<?= $_this->get_field_id('pagination') ?>">
     </div>
 
     <div class="field">

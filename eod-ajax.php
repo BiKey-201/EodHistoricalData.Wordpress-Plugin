@@ -30,6 +30,24 @@ if (wp_doing_ajax()) {
 		wp_die();
 	}
 
+    // Get news data
+    add_action('wp_ajax_nopriv_get_eod_financial_news', 'get_eod_financial_news_callback');
+    add_action('wp_ajax_get_eod_financial_news', 'get_eod_financial_news_callback');
+    function get_eod_financial_news_callback(){
+        if (!wp_verify_nonce($_POST['nonce_code'], 'eod_ajax_nonce')) die('Stop!');
+        global $eod_api;
+        $all_news = [];
+        $targets = explode(', ', $_POST['props']['target']);
+        foreach ($targets as $target) {
+            $news = $eod_api->get_news($target, $_POST['props']);
+            if(!$news || $news['error']) continue;
+            $all_news = array_merge($all_news, $news);
+        }
+
+        echo json_encode( $all_news );
+        wp_die();
+    }
+
 	// Check API token for permissions
 	add_action('wp_ajax_eod_check_token_capability', 'eod_check_token_capability_callback');
 	function eod_check_token_capability_callback(){
@@ -40,8 +58,8 @@ if (wp_doing_ajax()) {
 	}
 
     // Searching for items from API by string
-    add_action('wp_ajax_search_by_string', 'search_by_string_callback');
-    function search_by_string_callback(){
+    add_action('wp_ajax_search_eod_item_by_string', 'search_eod_item_by_string_callback');
+    function search_eod_item_by_string_callback(){
         if (!wp_verify_nonce($_POST['nonce_code'], 'eod_ajax_nonce')) die('Stop!');
         global $eod_api;
         echo json_encode( $eod_api->search_by_string($_POST['string']) );

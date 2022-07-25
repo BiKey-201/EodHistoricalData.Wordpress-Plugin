@@ -106,35 +106,55 @@ function eod_shortcode_financials($atts=[], $content = null, $tag = '')
  * @param string $tag
  * @return string
  */
-function eod_shortcode_news($atts=[], $content = null, $tag = '')
+function eod_shortcode_news($atts = [], $content = null, $tag = '')
 {
     global $eod_api;
+    $options = get_eod_options();
 
     $atts = array_change_key_case((array)$atts, CASE_LOWER);
     // override default attributes with user attributes
     $shortcode_atts = shortcode_atts([
-        'target' => false,
-        'tag'    => false,
-        'limit'  => 50,
-        'offset' => 0,
-        'from'   => false,
-        'to'     => false
+        'classname'      => false,
+        'pagination' => false,
+        'target'     => false,
+        'tag'        => false,
+        'limit'      => 50,
+        'from'       => false,
+        'to'         => false
     ], $atts, $tag);
+    $data_attributes = '';
+    foreach ($shortcode_atts as $key => $val){
+        if($val && $key !== 'classname') $data_attributes .= " data-$key='$val'";
+    }
 
-    if($shortcode_atts['target'] || $shortcode_atts['tag'])
-        $news = $eod_api->get_news($shortcode_atts['target'], array(
-            'tag'    => $shortcode_atts['tag'],
-            'limit'  => intval($shortcode_atts['limit']),
-            'offset' => intval($shortcode_atts['offset']),
-            'from'   => $shortcode_atts['from'],
-            'to'     => $shortcode_atts['to']
+    if(!$shortcode_atts['target'] && !$shortcode_atts['tag']){
+        return eod_load_template("template/news.php", array(
+            'news' => array('error' => 'wrong target or topic')
         ));
-    else
-        $news = array('error' => 'wrong target or topic');
+    }
 
-    return eod_load_template("template/news.php", array(
-        'news' => $news
-    ));
+    if($options['news_ajax'] === 'off'){
+        $all_news = [];
+        $targets = explode(', ', $shortcode_atts['target']);
+        foreach ($targets as $target) {
+            $news = $eod_api->get_news($target, array(
+                'tag'    => $shortcode_atts['tag'],
+                'limit'  => intval($shortcode_atts['limit']),
+                'from'   => $shortcode_atts['from'],
+                'to'     => $shortcode_atts['to']
+            ));
+            if(!$news || $news['error']) continue;
+            $all_news = array_merge($all_news, $news);
+        }
+        return '<div class="eod_news_list '.($shortcode_atts['classname'] ? : '').'" '.$data_attributes.'>'
+                    .eod_load_template("template/news.php", array(
+                        'news' => $all_news,
+                        'target' => $shortcode_atts['target']
+                    )).
+               '</div>';
+    }
+
+    return '<div class="eod_news_list '.($shortcode_atts['classname'] ? : '').'" '.$data_attributes.'></div>';
 }
 
 

@@ -38,7 +38,7 @@ if(!class_exists('EOD_Financials_Admin')) {
             $financial_group = get_post_meta($post->ID, '_financial_group', true);
             if(!$financial_group) $financial_group = 'Financials->Balance_Sheet';
 
-            $vars = $eod_api->get_financials_lib();
+            $financials_lib = $eod_api->get_financials_lib();
             ?>
 
             <div class="eod_page">
@@ -62,9 +62,11 @@ if(!class_exists('EOD_Financials_Admin')) {
                 <div class="fd_array_grid">
                     <div>
                         <input type="text" class="search_fd_variable" placeholder="Search data">
-                        <ul class="fd_list source_list">
-                            <?php eod_display_source_list($vars, array(), explode('->', $financial_group)); ?>
+                        <?php foreach ($financials_lib as $type => $vars) { ?>
+                        <ul class="fd_list source_list <?= implode( '_', explode('->', $type) ) ?> <?= $type === $financial_group ? 'active' : '' ?>">
+                            <?php eod_display_source_list($vars); ?>
                         </ul>
+                        <?php } ?>
                     </div>
                     <div>
                         <ul class="fd_list selected_list">

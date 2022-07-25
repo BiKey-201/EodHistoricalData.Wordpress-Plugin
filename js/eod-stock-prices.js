@@ -1,8 +1,8 @@
-
 let eod_api_token = '';
-jQuery(function(){
+document.addEventListener('DOMContentLoaded', (e) => {
     eod_init();
 });
+
 async function eod_init(){
     eod_api_token = await jQuery.ajax({
         method: "POST",
@@ -17,6 +17,10 @@ async function eod_init(){
     eod_display_fundamental_data();
     eod_init_realtime_tickers()
     eod_display_all_historical_tickers();
+    // Display items by AJAX
+    if( eod_display_settings.news_ajax && eod_display_settings.news_ajax === 'on' ) {
+        eod_display_news();
+    }
 
     // Refresh tickers every minute. It will affect your daily API Limit!
     const EOD_refresh_common_tickers = false,
@@ -31,7 +35,17 @@ async function eod_init(){
 
 
 function abbreviateNumber(value) {
-    let newValue = value;
+    // Check type
+    let newValue;
+    if(typeof value === 'string'){
+        newValue = +value;
+    }else{
+        newValue = value;
+    }
+
+    if(isNaN(newValue) || typeof newValue !== 'number')
+        return value;
+
     if (value >= 1000 || value <= -1000) {
         let shift = 1,
             suffixes = ["", "K", "M", "B", "T"],
@@ -58,9 +72,11 @@ function get_eod_fundamental(target, callback){
         }
     }).always((data) => {
         if(data.error) console.log('EOD-error: ' +data.error, target);
-    })
-    .done((data) => { callback(data); });
+    }).done((data) => {
+        callback(data);
+    });
 }
+
 
 function get_eod_ticker(type = 'historical', list, callback){
     if(typeof callback !== 'function' || !jQuery.isArray(list) || list.length < 1) return false;
@@ -125,6 +141,186 @@ function render_eod_ticker(type, target, value, prevValue = false){
     });
 }
 
+/* =========================================
+     loading and displaying all financial news
+   ========================================= */
+/**
+ * Initiate the loading and display financial news on the page.
+ * @param $items jQuery list of EOD news boxes. Default displaying all .eod_news_list elements on page.
+ */
+function eod_display_news( $items = false ){
+    if($items && !($items instanceof jQuery)) return;
+    if(!$items) $items = jQuery(".eod_news_list");
+
+    $items.each(function(){
+        eod_display_news_item( jQuery(this) );
+    });
+}
+
+/**
+ * Loading and display financial news for the current item
+ * @param $box
+ */
+function eod_display_news_item( $box ){
+    if(!($box instanceof jQuery)) return;
+    $box = $box.eq(0);
+
+    // Loading animation
+    $box.addClass('eod_loading');
+
+    // Collect parameters
+    let props = {};
+    for(let prop of ['target','tag','from','to','limit','pagination']) {
+        let val = $box.attr('data-' + prop);
+        if(val) props[prop] = val;
+    }
+    if(!props.target && !props.tag) return false;
+
+    // Get and display news html
+    jQuery.ajax({
+        dataType: "json",
+        method: "POST",
+        url: eod_ajax_url,
+        data: {
+            'action': 'get_eod_financial_news',
+            'nonce_code': eod_ajax_nonce,
+            'props': props
+        }
+
+    }).always((data) => {
+        $box.data('target', props.target).removeClass('eod_loading');
+        if(!data) console.log('EOD-error: empty news response', props);
+
+    }).done((data) => {
+        if(!data || data.error) return false;
+
+        // Sort by date
+        data.sort(function(a,b){
+            return new Date(b.date) - new Date(a.date);
+        });
+        // Discard the excess and duplicates
+        let whitelist = [], res = [];
+        for(let i=0; i<data.length; i++){
+            let slug = data[i].date + data[i].title;
+            if( whitelist.indexOf(slug) === -1 ){
+                res.push(data[i]);
+                whitelist.push(slug);
+            }
+        }
+        if(props.limit) res = res.slice(0, parseInt(props.limit));
+
+        // Render
+        eod_render_news_item($box, res);
+    });
+}
+function eod_render_news_item( $box, data ){
+    // Save data
+    $box.data('data', data);
+
+    // Remove old list and pagination
+    $box.find('.list, .eod_pagination').remove();
+
+    // Add pagination
+    let pagination = $box.attr('data-pagination'),
+        limit = pagination ? Math.abs(pagination) : data.length,
+        last_page = Math.ceil(data.length/limit);
+    if(pagination) {
+        let $pagination = jQuery('\
+                <div class="eod_pagination start">\
+                    <button class="prev"></button>\
+                    <span>Page</span>\
+                    <input type="number" min="1" value="1" max="' + last_page + '">\
+                    <span>of ' + last_page + '</span>\
+                    <button class="next"></button>\
+                </div>');
+
+        // Change page event
+        $pagination.find('input[type=number]').on('change', function () {
+            let $input = jQuery(this),
+                $box = $input.closest('.eod_news_list');
+
+            // Check range
+            if (parseInt($input.val()) < 1)
+                $input.val(1);
+            if (parseInt($input.val()) > parseInt($input.attr('max')))
+                $input.val($input.attr('max'));
+
+            // Check last and fist page
+            console.log($pagination);
+            $pagination.toggleClass('start', parseInt($input.val()) === 1);
+            $pagination.toggleClass('end', $input.val() === $input.attr('max'));
+
+            // Change news list
+            eod_set_news_page($box, parseInt($input.val()));
+        });
+
+        // Click on arrow button
+        $pagination.find('button').on('click', function () {
+            let $input = jQuery(this).siblings('input').eq(0),
+                d = jQuery(this).hasClass('next') ? 1 : -1,
+                current_page = parseInt($input.val()),
+                max_page = $input.attr('max'),
+                next_page = current_page + d;
+
+            if (next_page < 1 || next_page > max_page) return false;
+
+            $input.val(next_page).change();
+        });
+
+        $box.prepend($pagination);
+
+        // Add news list container
+        $box.prepend( jQuery('<div class="list"></div>') )
+
+        eod_set_news_page($box);
+    }
+}
+function eod_set_news_page( $box, page = 1 ){
+    let data = $box.data('data'),
+        news = [],
+        limit = $box.attr('data-pagination') ? parseInt($box.attr('data-pagination')) : data.length,
+        offset = (page-1)*limit;
+    for(let i=0; i<limit && (offset+i)<data.length; i++)
+        news.push( eod_news_item_html( data[offset+i] ) );
+    $box.find('.list').html(news);
+}
+function eod_news_item_html( item ){
+    // Tags
+    let tags = '';
+    for(let tag of item.tags)
+        tags += '<li>'+tag+'</li>';
+
+    // Datetime
+    let display_date, number,
+        timestamp = new Date( item.date ).getTime(),
+        now = new Date().getTime(),
+        time_ago = (now - timestamp)/1000;
+    if(time_ago > 24*3600){
+        let date_options = {year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: 'numeric'};
+        display_date = new Date(timestamp).toLocaleDateString("en-US", date_options);
+    }else{
+        if(time_ago > 3600){
+            number = Math.floor(time_ago/3600);
+            display_date = number + ( number>1 ? ' hours ago' : ' hour ago');
+        }else{
+            number = Math.floor(time_ago/60);
+            display_date = number + ( number>1 ? ' minutes ago' : ' minute ago');
+        }
+    }
+
+    return '\
+        <div class="eod_news_item">\
+            <div class="thumbnail"></div>\
+            <a rel="nofollow" target="_blank" class="h" href="'+item.link+'">'+item.title+'</a>\
+            <time dateTime="'+item.date+'" class="date">'+display_date+'</time>\
+            <blockquote cite="'+item.link+'">\
+                <div class="description">\
+                    '+ item.content.substring(0, 300) +'\
+                </div>\
+            </blockquote>\
+            <ul class="tags">'+tags+'</ul>\
+        </div>';
+}
 
 /* =========================================
      loading and displaying all live tickers
@@ -135,8 +331,6 @@ function eod_display_all_live_tickers(){
 
     jQuery(".eod_live").each(function(){
         let target = jQuery(this).attr('data-target');
-            
-        // Common ticker
         if( eod_t_list.indexOf(target) === -1 )
             eod_t_list.push(target);
     });
@@ -253,13 +447,14 @@ function eod_display_fundamental_data(){
         get_eod_fundamental(target, function (data) {
             if(!data || data.error) return false;
 
-            // Class target
+            // Find fundamental data elements
             let trg = target.toLowerCase().split('.'),
-                $ul = jQuery('.eod_fd_list.eod_t_'+trg.join('_')),
-                $table_box = jQuery('.eod_financials.eod_t_'+trg.join('_'));
+                $fd_list = jQuery('.eod_fd_list.eod_t_'+trg.join('_')),
+                $financials_table = jQuery('.eod_financials.eod_t_'+trg.join('_'));
 
-            // for simple list data
-            $ul.find('> li').each(function(){
+            // Render data
+            // for simple data list
+            $fd_list.find('> li').each(function(){
                 let $li = jQuery(this),
                     slug = $li.attr('data-slug');
                 if(!slug) return;
@@ -272,25 +467,49 @@ function eod_display_fundamental_data(){
                     value = value[key];
                 }
 
-                // Display string or number value
-                if( ['number', 'string'].indexOf(typeof value) > -1 ) {
-                    $li.append('<span>'+value+'</span>');
-                }else if(typeof value === 'object'){
-                    let items_list = '';
-                    for (let item of value) {
-                        let keys_list = '';
-                        for (let key in item) {
-                            keys_list += '<li><b>'+key+': </b><span>'+item[key]+'</span></li>';
+                // Display string or number value as string
+                if( ['number', 'string', 'undefined'].indexOf(typeof value) > -1 ) {
+                    $li.append('<span>'+ abbreviateNumber(value) +'</span>');
+
+                // Display object as table
+                }else if(typeof value === 'object' && value !== null){
+                    let Table = new EodCreateTable({
+                            type: 'table'
+                        });
+
+                    // The parameter item may contain a title in its own key
+                    let has_row_name = !Array.isArray(value);
+
+                    // Table header
+                    let [first_item_key] = Object.keys(value);
+                    if( typeof( value[first_item_key] ) === 'object' ) {
+                        if(has_row_name){
+                            Table.set_header( ['', ...Object.keys(value[first_item_key])] );
+                        }else{
+                            Table.set_header( Object.keys(value[first_item_key]) );
                         }
-                        items_list += '<li><ul>'+keys_list+'</ul></li>';
                     }
-                    $li.append('<ul>'+items_list+'</ul>');
+
+                    // Table body
+                    for (let [index, item] of Object.entries(value)) {
+                        let values_list = typeof item === 'object' ? Object.values(item) : [item];
+                        if(has_row_name){
+                            Table.add_row( [index, ...values_list] );
+                        }else{
+                            Table.add_row( values_list );
+                        }
+                    }
+
+                    // Show table
+                    let $wrapper = jQuery('<div class="eod_table_wrapper"></div>');
+                    $wrapper.append( Table.get_table() )
+                    let simple_bar = new SimpleBar( $wrapper[0] );
+                    $li.append( $wrapper );
                 }
             });
 
             // for financials tables
-
-            $table_box.each(function(){
+            $financials_table.each(function(){
                 // Save data in element
                 jQuery(this).data('data', data);
 
@@ -304,11 +523,13 @@ function eod_display_fundamental_data(){
 /* =========================================
            render financial table
    ========================================= */
-function eod_render_financial_table($table_box) {
+function eod_render_financial_table( $table_box ) {
     let financials_list = $table_box.data('data');
     if (!financials_list) return;
 
-    let $table = $table_box.find('.eod_tbody'),
+    let Table = new EodCreateTable({
+            type: 'div'
+        }),
         selected_timeline = $table_box.data('selected_timeline'),
         group = $table_box.attr('data-group') ? $table_box.attr('data-group').split('->') : false,
         parameters = $table_box.attr('data-cols'),
@@ -380,8 +601,7 @@ function eod_render_financial_table($table_box) {
     $table_box.find('.eod_tbody').html('');
 
     // First header row
-    let $header = jQuery('<div class="header"><div><span>Currency: '+currency+'</span></div></div>'),
-        dates = [];
+    let dates = [];
     for(let [date, item] of Object.entries( financials_list )){
         let d = new Date( date ),
             y = d.getFullYear(),
@@ -400,17 +620,14 @@ function eod_render_financial_table($table_box) {
 
         dates.push('<div>'+ display_date +'</div>');
     }
-    $header.append( dates.reverse() );
-    $table.append( $header );
+    Table.set_header( ['<span>Currency: '+currency+'</span>', ...dates.reverse()] );
 
     // Another rows of stats
     for(let parameter of parameters.split(';')){
-        let $row = jQuery('<div></div>');
-
         // First column of parameters names
         let display_name = eod_display_settings.prop_naming[parameter];
         if(!display_name) display_name = parameter;
-        $row.append( jQuery('<div><span title="'+ display_name +'">'+ display_name +'</span></div>') )
+        display_name = '<span title="'+ display_name +'">'+ display_name +'</span>';
 
         // Another columns of parameters values
         let cols = [];
@@ -424,10 +641,115 @@ function eod_render_financial_table($table_box) {
                 continue;
 
             if(item[parameter] === 0 || item[parameter]) value = abbreviateNumber(item[parameter]);
-            cols.push( jQuery('<div>'+ (value === '' ? '-' : value) +'</div>') );
+            cols.push( (value === '' ? '-' : value) );
         }
 
-        $row.append( cols.reverse() )
-        $table.append( $row );
+        Table.add_row( [display_name, ...cols.reverse()] );
     }
+
+    // Show table
+    $table_box.find('.eod_tbody').replaceWith( Table.get_tbody() );
+}
+
+
+function getTextWidth(text, font) {
+    // re-use canvas object for better performance
+    const canvas = getTextWidth.canvas || (getTextWidth.canvas = document.createElement("canvas"));
+    const context = canvas.getContext("2d");
+    context.font = font;
+    const metrics = context.measureText(text);
+    return metrics.width;
+}
+
+function getCssStyle(element, prop) {
+    return window.getComputedStyle(element, null).getPropertyValue(prop);
+}
+
+function getCanvasFontSize(el = document.body) {
+    const fontWeight = getCssStyle(el, 'font-weight') || 'normal';
+    const fontSize = getCssStyle(el, 'font-size') || '16px';
+    const fontFamily = getCssStyle(el, 'font-family') || 'Times New Roman';
+
+    return `${fontWeight} ${fontSize} ${fontFamily}`;
+}
+
+class EodCreateTable {
+    constructor(p) {
+        const _this = this;
+        _this.header = [];
+        _this.rows = [];
+        _this.type = p.type ? p.type : 'div';
+        _this.template = {
+            table: {
+                table: 'table',
+                tbody: 'tbody',
+                row: 'tr',
+                header: 'th',
+                cell: 'td'
+            },
+            div: {
+                table: 'div',
+                tbody: 'div',
+                row: 'div',
+                header: 'div',
+                cell: 'div'
+            }
+        }[_this.type];
+    }
+
+    set_header( list ) {
+        const _this = this;
+        _this.header_list = list;
+    }
+
+    add_row( list ) {
+        const _this = this;
+        _this.rows.push( list );
+    }
+
+    get_tbody() {
+        const _this = this;
+        let tag = _this.template,
+            $tbody = jQuery('<'+tag.tbody+' class="eod_tbody"></'+tag.tbody+'>');
+
+        // Header
+        if ( Array.isArray( _this.header_list ) && _this.header_list.length ){
+            let $header = jQuery('<'+tag.row+' class="header"></'+tag.row+'>');
+            for (let item of _this.header_list) {
+                $header.append('<'+tag.header+'>' + item + '</'+tag.header+'>');
+            }
+            $tbody.append($header);
+        }
+
+        // Body
+        for( let row of _this.rows ){
+            let $row = jQuery('<'+tag.row+'></'+tag.row+'>');
+            for( let item of row ){
+                $row.append('<'+tag.cell+'>' + item + '</'+tag.cell+'>');
+            }
+            $tbody.append($row);
+        }
+
+        return $tbody;
+    }
+
+    get_table() {
+        let tag = this.template,
+            $table = jQuery('<'+tag.table+' class="eod_table"></'+tag.table+'>');
+        $table.append( this.get_tbody() )
+        return $table;
+    }
+
+    //     max_first_col_width = 0,
+    //     font_styles = 'normal 12px ' + getCssStyle(document.body, 'font-family') || 'Times New Roman';
+
+    // for (let [index, item] of Object.entries(value)) {
+    //     let $row = jQuery('<div><div>'+index+'</div></div>'),
+    //         first_col_width = getTextWidth( index, font_styles );
+    //
+    //     if( first_col_width > max_first_col_width ) max_first_col_width = first_col_width;
+    // }
+    //
+    // max_first_col_width += 15;
+    // $table.find('.eod_tbody > div > div:first-child').css({'width': max_first_col_width + 'px'});
 }

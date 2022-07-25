@@ -17,9 +17,10 @@
 
     <div class="field">
         <label class="h">Ticker code/name <span class="require" title="required shortcode element">*</span></label>
-        <div class="eod_search_box">
+        <div class="eod_search_box advanced">
             <input class="eod_search_input" type="text" autocomplete="off" placeholder="Find ticker by code or company name"/>
             <div class="result"></div>
+            <ul class="selected"></ul>
         </div>
     </div>
     
@@ -43,10 +44,10 @@
     </div>
     
     <div class="field">
-        <div class="h">Offset</div>
-        <div>The offset of the data. Default value: 0, minimum value: 0. For example, to get 100 symbols starting from 200 you should use limit=100 and offset=200.</div>
+        <div class="h">Pagination</div>
+        <div>The number of news items per page. Default 0 disables pagination.</div>
         <label>
-            <input type="number" name="eod_news_offset" value="0" min="0">
+            <input type="number" name="eod_news_pagination" value="0" min="0">
         </label>
     </div>
     
@@ -56,7 +57,15 @@
         <span>:</span>
         <input type="date" name="eod_news_to" value="" max="<?= Date('Y-m-d') ?>">
     </div>
-    
+
+    <div class="field">
+        <div class="h">Class name</div>
+        <div>Adds an html class for css styling or other purposes.</div>
+        <label>
+            <input type="text" name="eod_news_classname" placeholder="my_news_feed">
+        </label>
+    </div>
+
     <div class="field">
         <div class="h">Your shortcode:</div>
         <div>
@@ -72,33 +81,41 @@
 function eod_create_news_shortcode(){
     let $shortcode = jQuery('<?= $form_class ?> .eod_shortcode_result'),
         $search_box = jQuery('<?= $form_class ?> .eod_search_box'),
-        ticker = $search_box.find('.selected').data('ticker'),
+        $targets = $search_box.find('.selected li'),
         tag = jQuery('<?= $form_class ?> select[name=eod_news_tag]').val(),
         type = jQuery('<?= $form_class ?> input[name=eod_news_type]:checked').val(),
-        offset = jQuery('<?= $form_class ?> input[name=eod_news_offset]').val(),
-        limit = jQuery('<?= $form_class ?> input[name=eod_news_limit]').val(),
+        pagination = Math.abs( jQuery('<?= $form_class ?> input[name=eod_news_pagination]').val() ),
+        limit = Math.abs( jQuery('<?= $form_class ?> input[name=eod_news_limit]').val() ),
         from = jQuery('<?= $form_class ?> input[name=eod_news_from]').val(),
-        to = jQuery('<?= $form_class ?> input[name=eod_news_to]').val();
+        to = jQuery('<?= $form_class ?> input[name=eod_news_to]').val(),
+        classname = jQuery('<?= $form_class ?> input[name=eod_news_classname]').val();
 
-    // Default offset and limit
-    if( offset === '') offset = 0;
-    if( limit === '') offset = 50;
+    // Default pagination and limit
+    if( pagination === '') pagination = 0;
+    if( limit === '') limit = 50;
 
     // Check news type and ignore unwanted target
-    if(type === 'topic') ticker = false;
+    if(type === 'topic') $targets = false;
     else tag = false;
     $search_box.closest('.field').toggle( type === 'ticker' );
     jQuery('<?= $form_class ?> select[name=eod_news_tag]').closest('.field').toggle( type === 'topic' );
 
-    if(!ticker && !tag){
+    if(!$targets.length && !tag){
         $shortcode.html('-');
         jQuery('.tab.active .eod_error').remove();
         return false;
     }
-        
-    let target = ticker ? ticker['code'] + '.' + ticker['exchange'] : '',
+
+    let target = '',
+        targets_list = [],
         last_target = $search_box.data('last_target');
-        
+    if($targets.length){
+        $targets.each(function(){
+            targets_list.push(jQuery(this).attr('data-target'));
+        });
+        target = targets_list.join(', ');
+    }
+
     // Validate when changing the target or topic of the shortcode
     if(!last_target || last_target !== target+tag){
         check_token_on_example_page('news', {
@@ -111,12 +128,13 @@ function eod_create_news_shortcode(){
 
     $shortcode.html(
         '[eod_news '
-            + ( ticker ? (' target="'+ target +'"') : '' )
+            + ( target ? (' target="'+ target +'"') : '' )
             + ( tag ? (' tag="'+tag+'"') : '' )
-            + ( (offset === 0) ? '' : (' offset="'+offset+'"') )
+            + ( (pagination === 0) ? '' : (' pagination="'+pagination+'"') )
             + ( (limit === 50) ? '' : (' limit="'+limit+'"') )
             + ( from ? (' from="'+from+'"') : '' )
             + ( to ? (' to="'+to+'"') : '' )
+            + ( classname ? (' classname="'+ classname +'"') : '' )
         + ']'
     );
 }
@@ -125,7 +143,7 @@ jQuery(document).on('change', '<?= $form_class ?> input:not(.eod_search_input), 
     eod_create_news_shortcode();
 });
 jQuery(document).on('click', '<?= $form_class ?> .eod_search_box .remove', function(){
-    jQuery(this).parent().remove();
+    jQuery(this).closest('li').remove();
     eod_create_news_shortcode();
 });
 
@@ -134,11 +152,19 @@ jQuery(function(){
     eod_search_input(
         jQuery('<?= $form_class ?> .eod_search_input'),
         function (res) {
-            let $box = res.$row.closest('.eod_search_box');
-            $box.find('.selected').remove();
-            $box.append(
-                res.$row.clone().data('ticker', res.ticker).attr('class', 'selected').append('<div class="remove"></div>')
-            );
+            let target = res.ticker.code + '.' + res.ticker.exchange,
+                $box = res.$input.closest('.eod_search_box').find('.selected'),
+                $item = jQuery('\
+                    <li data-target="' + target + '">\
+                        <span class="move"></span>\
+                        <div class="header">\
+                            <span class="name">' + target + '</span>\
+                            <div class="remove"></div>\
+                        </div>\
+                    </li>');
+            // Add item
+            $box.append( $item );
+
             res.$input.val('');
 
             eod_create_news_shortcode();

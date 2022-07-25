@@ -19,10 +19,32 @@ function eod_search_input($element, callback, limit = 6){
         if (!e.target.value) return;
 
         // Find suitable tickers by name/code
-        jQuery.getJSON("https://eodhistoricaldata.com/api/query-search-extended/?q=" + e.target.value, function (data) {
+        jQuery.ajax({
+            dataType: "json",
+            method: "POST",
+            url: eod_ajax_url,
+            data: {
+                'action': 'search_eod_item_by_string',
+                'nonce_code': eod_ajax_nonce,
+                'string': e.target.value,
+            }
+        }).always((data) => {
+            if(data.error) console.log('EOD-error: ' +data.error, target);
+        }).done((data) => {
             // Display result list below search input
             let list = [], $result = $input.siblings('.result');
-            jQuery.each(data, function (i, item) {
+            jQuery.each(data, function (i, raw_item) {
+                // Turn all the keys of an object to lower case
+                // Scripts in various places rely on lower case names
+                const item = Object.fromEntries(
+                    Object.entries(raw_item).map(([k, v]) => [k.toLowerCase(), v])
+                );
+
+                // Take items only with certain type
+                let type =  $input.data('type_filter');
+                if(type && type.toLowerCase() !== item['type'].toLowerCase() )
+                    return;
+
                 let $row = jQuery('\
                     <div class="item">\
                         <span>' + item['code'] + '.' + item['exchange'] + '</span>\
@@ -32,6 +54,7 @@ function eod_search_input($element, callback, limit = 6){
 
                 // Add click listener in which the callback will be called.
                 $row.data('ticker', item).on('click', () => {
+                    $input.data('selected_ticker', item);
                     callback( {
                         $input: $input,
                         $row: $row,

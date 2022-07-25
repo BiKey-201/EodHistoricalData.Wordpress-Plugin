@@ -84,7 +84,7 @@ $form_class = '.eod_shortcode_form.for_financials';
             '[eod_financials '
             + 'target="' + target + '" '
             + 'id="' + preset_id + '" '
-            + 'preset="' + label + '"'
+            + 'preset="' + label + '" '
             + (years ? ('years="' + years.join('-') + '"') : '')
             + ']'
         );

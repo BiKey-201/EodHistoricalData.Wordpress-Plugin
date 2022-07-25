@@ -2,8 +2,9 @@
      data-target="<?= $target ?>"
      data-cols="<?= implode(';', $financials_list) ?>"
      data-group="<?= $financial_group ?>"
+     data-simplebar
      <?= isset($years) ? "data-years='$years'" : '' ?>>
-    <div class="eod_table" data-simplebar>
+    <div class="eod_table">
         <div class="eod_tbody"></div>
     </div>
 </div>

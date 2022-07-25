@@ -30,12 +30,14 @@ if(!class_exists('EOD_Stock_Prices_Plugin')) {
                 array(
                     '_this'              => $this,
                     'args'               => $args,
-                    'target'             => $instance['target'],
-                    'topic'              => $instance['topic'],
-                    'limit'              => $instance['limit'],
-                    'offset'             => $instance['offset'],
-                    'from'               => $instance['from'],
-                    'to'                 => $instance['to'],
+                    'props'              => array(
+                        'target'             => $instance['target'],
+                        'topic'              => $instance['topic'],
+                        'limit'              => $instance['limit'],
+                        'pagination'         => $instance['pagination'],
+                        'from'               => $instance['from'],
+                        'to'                 => $instance['to'],
+                    ),
                     'title'              => apply_filters('widget_title', $instance['title'])
                 )
             );
@@ -57,7 +59,7 @@ if(!class_exists('EOD_Stock_Prices_Plugin')) {
                     'target'            => isset($instance['target']) ? $instance['target'] : '',
                     'topic'             => isset($instance['topic']) ? $instance['topic'] : '',
                     'limit'             => isset($instance['limit']) ? $instance['limit'] : 50,
-                    'offset'            => isset($instance['offset']) ? $instance['offset'] : 0,
+                    'pagination'        => isset($instance['pagination']) ? $instance['pagination'] : 0,
                     'from'              => isset($instance['from']) ? $instance['from'] : '',
                     'to'                => isset($instance['to']) ? $instance['to'] : '',
                     'widget_title'      => isset($instance['title']) ? $instance['title'] : '',
@@ -79,7 +81,7 @@ if(!class_exists('EOD_Stock_Prices_Plugin')) {
             $instance['target'] = (!empty($new_instance['target'])) ? strip_tags($new_instance['target']) : '';
             $instance['topic'] = (!empty($new_instance['topic'])) ? strip_tags($new_instance['topic']) : '';
             $instance['limit'] = (!empty($new_instance['limit'])) ? $new_instance['limit'] : '';
-            $instance['offset'] = (!empty($new_instance['offset'])) ? $new_instance['offset'] : '';
+            $instance['pagination'] = (!empty($new_instance['pagination'])) ? $new_instance['pagination'] : '';
             $instance['from'] = (!empty($new_instance['from'])) ? $new_instance['from'] : '';
             $instance['to'] = (!empty($new_instance['to'])) ? $new_instance['to'] : '';
             $instance['type'] = strip_tags($new_instance['type']);

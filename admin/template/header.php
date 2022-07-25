@@ -1,7 +1,7 @@
 <div class="eod_admin_header">
     <div class="eod_admin_facade">
         <div class="h">
-            <img src="<?= EOD_URL ?>img/EOD_logo_w.svg" alt="<?php _e('EOD Historical Data<br> Financial WP plugin', 'eod_stock_prices'); ?>">
+            <img src="<?= EOD_URL ?>img/EOD_logo_w.png" alt="<?php _e('EOD Historical Data<br> Financial WP plugin', 'eod_stock_prices'); ?>">
             <div>Financial Data Plugin</div>
         </div>
         <div class="info">

@@ -26,9 +26,58 @@
     cursor: default;
 }
 
+/* =========================================
+                   LOADING
+   ========================================= */
+.eod_loading{
+    position: relative;
+    min-height: 40px;
+}
+.eod_loading:before, .eod_loading:after{
+    content: '';
+    position: absolute;
+    transition: 0.4s;
+}
+.eod_loading:before{
+    z-index: 4;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255,255,255,0.8);
+    left: 0; top: 0;
+}
+.eod_loading:after{
+    z-index: 5;
+    top: calc(50% - 15px); left: calc(50% - 15px);
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    border: 4px dashed #333;
+    animation: eod_loading  1.3s infinite;
+}
+.eod_loading.loaded:after,
+.eod_loading.loaded:before{opacity: 0;}
+.eod_loading.error:after{
+    content: 'Loading error';
+    color: #ff5e00;
+    animation: none;
+    border: 2px dashed #ff5e00;
+    text-transform: uppercase;
+    font-weight: bold;
+    width: auto;
+    height: auto;
+    background: rgba(255,255,255,0.8);
+    border-radius: 0;
+    padding: 10px;
+    transform: translate(-50%, -50%);
+    left: 50%;
+    top: 50%;
+}
+@keyframes eod_loading{
+    from{transform: rotate(0);}
+    to{transform: rotate(360deg);}
+}
 
 /* =========================================
-                  TICKER
+                    TICKER
    ========================================= */
 .eod_ticker{
     display: inline-block;
@@ -139,6 +188,39 @@ ul.eod_widget_ticker_list li {
     object-position: center;
 }
 
+.eod_pagination{
+    display: grid;
+    grid-auto-flow: column;
+    justify-content: center;
+    align-items: center;
+    grid-gap: 10px;
+}
+.eod_pagination span{
+    font-size: 1em;
+}
+.eod_pagination button{
+    height: 22px;
+    width: 22px;
+    border: 0;
+    outline: none;
+    background: no-repeat center / 17px url("data:image/svg+xml,%3Csvg width='15' height='15' viewBox='0 0 15 15' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg clip-path='url(%23clip0)'%3E%3Cpath d='M11.4677 8.24257L5.01788 14.6921C4.60759 15.1026 3.94239 15.1026 3.5323 14.6921C3.12219 14.282 3.12219 13.6168 3.5323 13.2068L9.23936 7.49988L3.53247 1.79321C3.12235 1.38292 3.12235 0.717821 3.53247 0.307704C3.94259 -0.102578 4.60776 -0.102578 5.01804 0.307704L11.4678 6.75736C11.6729 6.96252 11.7753 7.23112 11.7753 7.49985C11.7753 7.76871 11.6727 8.03751 11.4677 8.24257Z' fill='%23000000'/%3E%3C/g%3E%3C/svg%3E%0A");
+}
+.eod_pagination.end button:last-child,
+.eod_pagination.start button:first-child{
+    display: none;
+}
+.eod_pagination button.prev{transform: rotate(180deg)}
+.eod_pagination button:not(:hover){opacity: 0.7}
+.eod_pagination input[type=number]{
+    padding: 2px 0 2px 15px;
+    border: 1px solid #DBE1E4;
+    border-radius: 5px;
+    text-align: center;
+    outline: none;
+    width: 4.5em;
+    font-size: 1em;
+}
+
 
 /* =========================================
                FUNDAMENTAL DATA
@@ -156,53 +238,53 @@ ul.eod_widget_ticker_list li {
 }
 
 /* =========================================
-                 FINANCIALS
+                 EOD TABLE
    ========================================= */
-.eod_financials{
-    margin: 5px 0 15px;
+.eod_table{
     background: #fff;
 }
-.eod_financials .eod_tbody{
+.eod_table .eod_tbody{
     font-size: 12px;
-    overflow: auto;
 }
-.eod_financials .eod_tbody > div{
+.eod_table .eod_tbody > div{
     display: flex;
     border-top: 1px solid #ebebeb;
     width: max-content;
 }
-.eod_financials .eod_tbody > div:last-child{
+.eod_table .eod_tbody > div:last-child{
     border-bottom: 1px solid #ebebeb;
 }
-.eod_financials .eod_tbody > div.header{
+.eod_table .eod_tbody > div.header{
     color: #afafaf;
 }
-.eod_financials .eod_tbody > div > div{
+.eod_table .eod_tbody > div > div{
     align-items: center;
     display: flex;
     justify-content: flex-end;
-    line-height: 21px;
+    line-height: 12px;
+    min-height: 34px;
     margin-left: 16px;
     padding-bottom: 6px;
     padding-top: 6px;
-    white-space: nowrap;
-    min-width: 80px;
+    width: 80px;
+    white-space: normal;
+    text-align: right;
 }
-.eod_financials .eod_tbody > div > div:first-child{
-    min-width: 150px;
+.eod_table .eod_tbody > div > div:first-child{
+    width: 150px;
     margin-left: 0;
     justify-content: flex-start;
     position: sticky;
     left: 0;
     background-color: #fff;
 }
-.eod_financials .eod_tbody > div > div:first-child span{
+.eod_table .eod_tbody > div > div:first-child span{
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     max-width: 140px;
 }
-.eod_financials .eod_tbody > div > div:first-child:after{
+.eod_table .eod_tbody > div > div:first-child:after{
     content: '';
     position: absolute;
     right: 0;
@@ -213,14 +295,68 @@ ul.eod_widget_ticker_list li {
     transform: translateX(100%);
 }
 
-.eod_financials .simplebar-wrapper .eod_tbody{
-    overflow: unset;
+
+table.eod_table{
+    margin: 0!important;
+    text-align: right;
+    border-width: 0!important;
+    border-color: #ebebeb;
+    background: none!important;
 }
+table.eod_table .header{
+    position: sticky;
+    top: 0;
+    background: #fff;
+}
+table.eod_table tr > *:first-child{
+    text-align: left;
+}
+table.eod_table tbody th,
+table.eod_table tbody td{
+    line-height: 12px;
+    padding: 6px 4px 6px 0;
+    white-space: normal;
+    border: 0;
+    height: 34px;
+    vertical-align: middle;
+    border-bottom: 1px solid #ebebeb;
+}
+table.eod_table tbody th{
+    font-weight: normal;
+    color: #afafaf;
+}
+table.eod_table .eod_tbody tr:last-child td{
+    border-bottom: 0;
+}
+
+
+.eod_table_wrapper{
+    max-height: 300px;
+    border-bottom: 1px solid #ebebeb;
+    border-top: 1px solid #ebebeb;
+}
+.eod_financials{margin: 5px 0 15px;}
+.eod_financials .simplebar-wrapper{position: relative;}
+.eod_financials .simplebar-wrapper .eod_tbody{overflow: unset;}
 .eod_financials .simplebar-wrapper .eod_tbody > div:last-child {
     border-bottom: 5px solid #ebebeb;
 }
+.eod_table_wrapper{
+    max-height: 307px;
+    padding-right: 10px;
+    border-right: 5px solid #ebebeb;
+}
+.eod_table_wrapper .simplebar-content{
+    padding: 0!important;
+}
+.eod_table_wrapper .simplebar-scrollbar:before{
+    left: 0;
+    right: 0;
+}
+.eod_table_wrapper .simplebar-track.simplebar-vertical{
+    width: 5px;
+    right: -5px;
+}
 @media screen and (max-width: 765px) {
-    .eod_financials .eod_tbody{
-        padding-bottom: 6px;
-    }
+    .eod_table .eod_tbody{padding-bottom: 6px;    }
 }

@@ -103,7 +103,7 @@
     font-size: 1.3em;
     line-height: 1.3em;
     font-weight: 600;
-    text-align: left;
+    text-align: center;
 }
 .eod_admin_facade .info{text-align: left;}
 .eod_admin_facade .h img{max-width: 220px;}
@@ -118,6 +118,11 @@
 .eod_widget_form .field,
 .eod_page .field{
     margin-bottom: 20px;
+}
+.eod_widget_form .field.disabled,
+.eod_page .field.disabled{
+    cursor: default;
+    opacity: 0.4;
 }
 .eod_widget_form .flex,
 .eod_page .field.flex{
@@ -146,6 +151,13 @@
     font-size: 1em!important;
 }
 
+
+/* ================================ */
+/*           Left Menu
+/* ================================ */
+#adminmenu a.eod_admin_menu > .wp-menu-image {
+    filter: invert(53%) sepia(36%) saturate(5880%) hue-rotate(338deg) brightness(100%) contrast(89%);
+}
 /* ================================ */
 /*          General Page
 /* ================================ */
@@ -266,8 +278,9 @@
     margin: 0 0 2px 0;
 }
 
+.fd_list.source_list:not(.active){display: none;}
+
 .fd_list{
-    height: 100%;
     margin: 0;
 }
 .fd_list span {
@@ -303,6 +316,7 @@
 
 .fd_list.selected_list{
     border: 2px dashed #F05F40;
+    height: 100%;
 }
 
 
@@ -321,6 +335,9 @@
 .eod_shortcode_form input[type=number]{
     width: 100px;
     margin: 5px 0;
+}
+.eod_shortcode_form input[type=text]{
+
 }
 .eod_shortcode_form input[type=text],
 .eod_shortcode_form select{
@@ -472,4 +489,46 @@
     border-radius: 0!important;
     border: 0!important;
     background-color: #fff!important;
+}
+
+/* ================================ */
+/*         GUTENBERG BLOCKS
+/* ================================ */
+.eod_g_block .target_search{
+    width: 100%;
+    font-size: 0.8em;
+}
+.eod_g_block .target_search.disabled{
+    cursor: default;
+    opacity: 0.4;
+}
+.eod_g_block .target_search .result .item{
+    cursor: pointer;
+    background-color: #f7f7f7;
+    padding: 5px 10px;
+    border-left: 1px solid #999;
+    transition: 0.05s;
+    margin-bottom: 1px;
+}
+.eod_g_block .target_search .result .item:hover{
+    border-left: 4px solid #F05F40;
+    background-color: #eee;
+}
+.eod_g_block .target_search .result .item span {
+    margin-right: 4px;
+}
+
+
+.eod_g_block select{
+    width: 100%;
+}
+.eod_g_block .components-base-control{
+    width: 100%;
+    margin-bottom: 10px;
+}
+.eod_g_block .components-base-control .components-base-control__field{
+    margin: 0;
+}
+.eod_g_block .components-text-control__input, .eod_g_block .components-text-control__input[type=color], .eod_g_block .components-text-control__input[type=date], .eod_g_block .components-text-control__input[type=datetime-local], .eod_g_block .components-text-control__input[type=datetime], .eod_g_block .components-text-control__input[type=email], .eod_g_block .components-text-control__input[type=month], .eod_g_block .components-text-control__input[type=number], .eod_g_block .components-text-control__input[type=password], .eod_g_block .components-text-control__input[type=tel], .eod_g_block .components-text-control__input[type=text], .eod_g_block .components-text-control__input[type=time], .eod_g_block .components-text-control__input[type=url], .eod_g_block .components-text-control__input[type=week]{
+
 }

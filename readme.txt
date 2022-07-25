@@ -1,18 +1,12 @@
 === Financial Stocks & Crypto Market Data Plugin ===
 Contributors: eodhistoricaldata
-Donate link:
 Tags: Stock Markets, Stocks, ETF, Funds, Indices, Futures, Bonds, Government Bonds, Options. Forex Pairs, Cryptocurrencies, Quotes, Tickers, Securities, Exchanges Details, End of Day prices, Intraday prices, Delayed prices, Real-Time prices, Fundamental datam, Financial tables, Earnings, Balance Sheets, Equities, Stock Shares Outstanding, Cash Flows, Income Statements
 Requires at least: 4.0
-Tested up to: 5.9.3
-Stable tag: 1.7
+Tested up to: 6.0.1
 Requires PHP: 5.4
+Stable tag: 1.7.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
-
-Stocks | ETF | Funds | Indices | Futures | Bonds & Government Bonds | Options | Forex Pairs & Cryptocurrencies.
-Exchanges Details.
-End of Day, Intraday, Delayed and Real-Time prices.
-Fundamental data + Financial tables: Earnings | Balance Sheets | Equities | Stock Shares Outstanding | Cash Flows | Income Statements
 
 == Description ==
 
@@ -20,7 +14,7 @@ If you are looking for a simple solution to develop a Financial website, blog, c
 
 <h3>1st How to get stocks data?</h3>
 To obtain stocks exchange data legally, you could officially buy it on each Exchange, which is quite expensive.
-Or get it via subscription to Financial Data API providers like EOD Historical Data (EODhd), Marketstack, Finnhub, Barchart, Financial Modeling Prep, Alpha Vantage, IEX Cloud, Tiingo, Intrinio, Quandl, Polygon, Alpaca, Twelve Data, Polygon.io, etc.
+Or get it via subscription to Financial Data API providers like EOD Historical Data (EODhd), Marketstack, Finnhub, Barchart, Financial Modeling Prep, Alpha Vantage, IEX Cloud, Tiingo, Intrinio, Quandl, Alpaca, Twelve Data, Polygon.io, etc.
 
 <h3>2nd How to use it without coding?</h3>
 Once you've obtained the data, the next question is "how to integrate it smoothly on your website?" To achieve that goal, EOD Historical Data (EODhd) became one of the pathfinders on the way to a better user experience.
@@ -67,37 +61,22 @@ Send us an email to support@eodhistoricaldata.com, and we will get back to you n
 == Screenshots ==
 
 1. Plugin overview
-
 2. Ticker Shortcode Generator
-
 3. Ticker Example
-
 4. Fundamental Data Shortcode Generator
-
 5. Fundamental Data Presets
-
 6. Fundamental Data Preset Example
-
 7. Fundamental Data Example
-
 8. Financial Table Shortcode Generator
-
 9. Financial Table Presets
-
 10. Financial Table Preset Example
-
 11. Financial Table Example
-
 12. Financial News Shortcode Generator
-
 13. Financial News Example
-
 14. General settings
 
 == Changelog ==
 
-The first version is here. Nothing has been changed.
-
-== Upgrade Notice ==
-
-It could be easily upgraded without any issues.
+Added: parameter "class" in shortcode "eod_news", adds class name to the news container.
+Added: loading effect, use for financial news while loading with AJAX.
+Changed: init functions for financial news displaying. Use the js function "eod_display_news()" to update all news containers. As a parameter, you can specify the jQuery element of container(s).

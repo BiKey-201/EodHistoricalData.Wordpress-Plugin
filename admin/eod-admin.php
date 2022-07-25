@@ -10,7 +10,7 @@ if(!class_exists('EOD_Stock_Prices_Admin')) {
 
             add_filter( 'plugin_action_links_'.EOD_BASENAME, array(&$this, 'add_plugins_list_link') );
 
-            add_action( 'admin_menu', array(&$this,'admin_menu'));
+            add_action( 'admin_menu', array(&$this,'admin_menu'), 3);
             add_action( 'admin_init', array(&$this,'admin_settings') );
             add_action( 'admin_init', array(&$this,'add_notices') );
             add_action( 'admin_enqueue_scripts',  array(&$this,'admin_scripts'));
@@ -37,7 +37,10 @@ if(!class_exists('EOD_Stock_Prices_Admin')) {
             //css
             wp_enqueue_style('eod_stock_admin_css',plugins_url('/css/eod-stock-prices-admin.css',__FILE__), array(), EOD_VER);
 
-            wp_enqueue_script( 'eod-fundamental-data', EOD_URL . 'admin/js/eod-fundamental.js', array('jquery', 'eod-admin'), EOD_VER );
+            wp_enqueue_script( 'jquery-ui-core' );
+            wp_enqueue_script( 'jquery-ui-sortable' );
+            wp_enqueue_script( 'jquery-ui-draggable' );
+            wp_enqueue_script( 'eod-fundamental-data', EOD_URL . 'admin/js/eod-fundamental.js', array('jquery', 'jquery-ui-draggable', 'jquery-ui-sortable', 'eod-admin'), EOD_VER );
             wp_enqueue_script( 'eod-admin', EOD_URL . 'admin/js/eod-admin.js', array('jquery'), EOD_VER );
 
             // Add ajax vars
@@ -56,21 +59,24 @@ if(!class_exists('EOD_Stock_Prices_Admin')) {
          * Add an admin menu entry for options page
          */
         public function admin_menu(){
-            global $submenu;
+            global $menu, $submenu;
 
             add_menu_page('Stock Prices Plugin', 'EODhd Financial and Stocks Market Data', 'manage_options', 'eod-stock-prices', array(&$this,'general_page'),'data:image/svg+xml;base64,' . base64_encode('<svg width="68" height="68" viewBox="0 0 68 68" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M25.0952 17.4624V14H18.9048V17.4624H17V28.3441H18.9048V60H25.0952V28.3441H27V17.4624H25.0952Z" fill="white"/><path d="M32.2222 6V27H30V57H32.2222V63H37.2222V57H40V27H37.2222V6H32.2222Z" fill="white"/><path d="M50.3684 9.5H45.6316V13.5H43V34.5H45.6316V41.5H50.3684V34.5H53V13.5H50.3684V9.5Z" fill="white"/></svg>') );
             add_submenu_page('eod-stock-prices', 'Quick Start & Samples', 'Quick Start & Samples', 'manage_options', 'eod-stock-prices', array(&$this,'general_page') );
 
             //add_submenu_page('eod-stock-prices', 'Widgets Customization', 'Widgets customization', 'manage_options', 'eod-widgets', array(&$this,'widgets_page') );
             add_submenu_page('eod-stock-prices', 'Shortcode Generator', 'Shortcode Generator', 'manage_options', 'eod-examples', array(&$this,'examples_page') );
+            add_submenu_page('eod-stock-prices', 'Settings', 'Settings', 'manage_options', 'eod-settings', array(&$this,'settings_page') );
 
             // Permalinks
-            $permalink_fundamental = get_admin_url().'edit.php?post_type=fundamental-data';
-            $submenu['eod-stock-prices'][] = array( 'Fundamental Data Presets', 'manage_options', $permalink_fundamental );
-            $permalink_financials = get_admin_url().'edit.php?post_type=financials';
-            $submenu['eod-stock-prices'][] = array( 'Financial Table Presets', 'manage_options', $permalink_financials );
+            // $permalink = get_admin_url().'edit.php?post_type=fundamental-data';
+            // $submenu['eod-stock-prices'][] = array( 'Test page', 'manage_options', $permalink, 'aaa', 'bbb' );
 
-            add_submenu_page('eod-stock-prices', 'Settings', 'Settings', 'manage_options', 'eod-settings', array(&$this,'settings_page') );
+            // Add css classes
+            foreach( $menu as $key => $value ){
+                if( 'EODhd Financial and Stocks Market Data' == $value[0] )
+                    $menu[$key][4] .= " eod_admin_menu";
+            }
         }
 
 
